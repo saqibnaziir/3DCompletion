@@ -1,0 +1,31 @@
+# Code-only repository: track source, configs, scripts and markdown notes.
+# Everything else (data, checkpoints, results, meshes, paper) stays local.
+*
+!*/
+!*.py
+!*.cfg
+!*.bat
+!*.sh
+!*.md
+!*.yml
+!.gitignore
+
+# Never tracked
+__pycache__/
+/data/
+/docs/
+/paper
+/graphify-out/
+/.claude/
+/.vscode/
+/CLAUDE.md
+/EXTRAPOLATION/
+/INTERPOLATION/
+/revision/data/
+/revision/checkpoints/
+/revision/results/
+/revision/logs/
+# third-party baseline repo (has its own git + license)
+/Compattators/FaceCom_repo/
+/Compattators/FaceCom/coma_dataset/
+/Compattators/FaceCom/checkpoints_coma/
