@@ -2,6 +2,12 @@
 
 Newest first. Each entry lists code changes and experiments, with where outputs live (outputs themselves are not tracked).
 
+## 2026-11-04: Official test benchmark + evaluation
+- **Exp R1 training finished.** The user stopped it at epoch 289/300 because validation had plateaued; the best validation loss was 0.02847 at epoch 283.
+- New `scripts/_revision/build_test_benchmark.py`: a fixed benchmark on the official COMA test set. 1,483 meshes × {random_scatter, bfs_patch, plane_cut} = 4,449 samples, hole sizes uniform in 5–40%, seed 2026. Output: `revision/benchmark/official_test_masks.npz` and `official_test_index.csv`. All methods must use these masks.
+- New `scripts/_revision/eval_official_test.py`: missing/overall L2 (mm) and normal error in the hole and on the seam (deg). Writes a per-sample CSV, can resume after an interruption, and summarises by mask type and hole size.
+- New `scripts/_revision/test_full_model.bat`: runs R1 on the benchmark. Output: `revision/results/official_test/predict_x0_depthw_nrm/`.
+
 ## 2026-11-03: Repository set up
 - Initial commit of the code base: the 3DGeoMeshNet base model, the diffusion completion model, baselines, evaluation, ablation and figure scripts.
 
