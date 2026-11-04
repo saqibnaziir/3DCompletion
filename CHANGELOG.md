@@ -2,6 +2,14 @@
 
 Newest first. Each entry lists code changes and experiments, with where outputs live (outputs themselves are not tracked).
 
+## 2026-11-04: Exp2 (subject, expression) split, data prepared
+- Everything for Exp2 lives in `revision/exp2_subj_expr/` (see its README). `data/` and the official-split cache in `revision/data/` are untouched (checked: directory listing identical before and after).
+- New `scripts/_revision/exp2_subj_expr/make_split.py`: holds out 2 subjects (random, seed 2026: `FaceTalk_170913_03279_TA`, `FaceTalk_170915_00223_TA`) and 2 expressions (`high_smile`, `mouth_extreme`) at once. It trains on 10 × 10 = 13,430 meshes (hard links in `raw_train/`, no copies), and one model gives four test cells: ref = seen/seen (official test frames, 1,045 meshes), a = unseen subject (671), b = unseen expression (476), c = both unseen (164). Each cell has a benchmark in the same format as `revision/benchmark` (3 masks per mesh, 5–40% holes).
+- Leakage checks passed: 0 training files with a test subject/expression, 0 test files sharing an inode with a training file, 0 test meshes with the same vertices as a training mesh.
+- New config `config/config_diffusion_exp2_subjexpr.cfg`. The processed cache was built with `process_official_split.py` (train 10,744 / val 2,686).
+- New `scripts/_revision/exp2_subj_expr/check_processed.py`: all paths stay inside the Exp2 root, counts match, and the norm mean and template come from the Exp2 training set (0.05 mm from the raw_train mean; 2.97 mm from the official-split template).
+- New `train_exp2.bat` (same settings as R1) and `test_exp2.bat` (evaluates all four cells). Output: `revision/exp2_subj_expr/checkpoints/` and `results/{ref,a,b,c}/`.
+
 ## 2026-11-04: Official test benchmark + evaluation
 - **Exp R1 training finished.** The user stopped it at epoch 289/300 because validation had plateaued; the best validation loss was 0.02847 at epoch 283.
 - New `scripts/_revision/build_test_benchmark.py`: a fixed benchmark on the official COMA test set. 1,483 meshes × {random_scatter, bfs_patch, plane_cut} = 4,449 samples, hole sizes uniform in 5–40%, seed 2026. Output: `revision/benchmark/official_test_masks.npz` and `official_test_index.csv`. All methods must use these masks.

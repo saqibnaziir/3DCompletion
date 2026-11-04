@@ -29,3 +29,6 @@ __pycache__/
 /Compattators/FaceCom_repo/
 /Compattators/FaceCom/coma_dataset/
 /Compattators/FaceCom/checkpoints_coma/
+
+# Exp2 split definition (small, needed to reproduce the split)
+!/revision/exp2_subj_expr/splits/split.json
