@@ -18,6 +18,8 @@ Newest first. Each entry lists code changes and experiments, with where outputs 
 
   Normals: 5.36° in the hole, 2.76° on the seam. The old paper test (20 meshes, 5–15% holes, leaky split) gave 0.290 / 1.596 / 2.004. The like-for-like ≤15% bin gives 0.318 / 1.400 / 2.079, so the results hold on the leak-free split.
 - Fix: hole-size bins in `eval_official_test.py` now cover all samples (13 masks fell just outside 5–40%).
+- New `scripts/_revision/export_examples.py`: exports 20 benchmark samples (7 scatter, 7 patch, 6 plane cut, spanning hole sizes), each as GT / partial / completed / error-coloured mesh / mask. Output: `revision/results/official_test/predict_x0_depthw_nrm/examples/`.
+- Observation: the worst plane cuts are small ones (5.1% → 5.0 mm, 12.3% → 5.6 mm). These holes include the mesh's open lower border (neck rim), so they are extrapolation with no observed geometry on the far side. Plane cuts away from the border (19–33%) give 1.1–1.9 mm.
 
 ## 2026-11-03: Repository set up
 - Initial commit of the code base: the 3DGeoMeshNet base model, the diffusion completion model, baselines, evaluation, ablation and figure scripts.
