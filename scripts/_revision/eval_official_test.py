@@ -34,7 +34,8 @@ from utils.normals import normal_angular_error, boundary_band
 from scripts.infer_diffusion import (parse_diffusion_section, build_denoiser,
                                      get_template_info, complete)
 
-SIZE_BINS = [(0.05, 0.15), (0.15, 0.25), (0.25, 0.40)]
+# Half-open bins covering everything (a few masks land just outside 5-40%).
+SIZE_BINS = [(0.0, 0.15), (0.15, 0.25), (0.25, 1.01)]
 FIELDS = ['row', 'subject', 'expression', 'frame', 'strategy', 'missing_pct',
           'missing_mm', 'overall_mm', 'nrm_missing_deg', 'nrm_seam_deg']
 
@@ -64,8 +65,8 @@ def summarize(rows):
     for s in ('random_scatter', 'bfs_patch', 'plane_cut'):
         line(s, [r for r in rows if r['strategy'] == s])
     for lo, hi in SIZE_BINS:
-        line(f'hole {int(lo*100)}-{int(hi*100)}%',
-             [r for r in rows if lo <= r['missing_pct'] / 100 < hi + 1e-9])
+        line(f'hole {int(lo*100)}-{min(int(hi*100), 100)}%',
+             [r for r in rows if lo <= r['missing_pct'] / 100 < hi])
     print('=' * 92)
 
 

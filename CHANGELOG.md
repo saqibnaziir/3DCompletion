@@ -7,6 +7,17 @@ Newest first. Each entry lists code changes and experiments, with where outputs 
 - New `scripts/_revision/build_test_benchmark.py`: a fixed benchmark on the official COMA test set. 1,483 meshes × {random_scatter, bfs_patch, plane_cut} = 4,449 samples, hole sizes uniform in 5–40%, seed 2026. Output: `revision/benchmark/official_test_masks.npz` and `official_test_index.csv`. All methods must use these masks.
 - New `scripts/_revision/eval_official_test.py`: missing/overall L2 (mm) and normal error in the hole and on the seam (deg). Writes a per-sample CSV, can resume after an interruption, and summarises by mask type and hole size.
 - New `scripts/_revision/test_full_model.bat`: runs R1 on the benchmark. Output: `revision/results/official_test/predict_x0_depthw_nrm/`.
+- **R1 results** (4,449 samples, best-validation EMA, single draw). Missing-region L2 in mm:
+
+  | | all | ≤15% | 15–25% | >25% |
+  |---|---|---|---|---|
+  | scatter | 0.324 | 0.318 | 0.317 | 0.334 |
+  | patch | 2.125 | 1.400 | 2.429 | 2.884 |
+  | plane cut | 2.651 | 2.079 | 2.708 | 2.991 |
+  | **all** | **1.700** | 1.263 | 1.748 | 2.057 |
+
+  Normals: 5.36° in the hole, 2.76° on the seam. The old paper test (20 meshes, 5–15% holes, leaky split) gave 0.290 / 1.596 / 2.004. The like-for-like ≤15% bin gives 0.318 / 1.400 / 2.079, so the results hold on the leak-free split.
+- Fix: hole-size bins in `eval_official_test.py` now cover all samples (13 masks fell just outside 5–40%).
 
 ## 2026-11-03: Repository set up
 - Initial commit of the code base: the 3DGeoMeshNet base model, the diffusion completion model, baselines, evaluation, ablation and figure scripts.
