@@ -21,6 +21,7 @@ __pycache__/
 /CLAUDE.md
 /EXTRAPOLATION/
 /INTERPOLATION/
+/runs/
 /revision/data/
 /revision/checkpoints/
 /revision/results/
@@ -30,5 +31,6 @@ __pycache__/
 /Compattators/FaceCom/coma_dataset/
 /Compattators/FaceCom/checkpoints_coma/
 
-# Exp2 split definition (small, needed to reproduce the split)
-!/revision/exp2_subj_expr/splits/split.json
+# Small split files needed to reproduce the experiments
+!/splits/coma_official_test.txt
+!/research/revision/exp2_subj_expr/split.json

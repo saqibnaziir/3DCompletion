@@ -4,8 +4,8 @@ import os
 
 # Maps the friendly --data name to its diffusion config file (relative to project root).
 DATA_CONFIGS = {
-    'COMA': 'config/config_diffusion.cfg',
-    'DFAUST': 'config/config_diffusion_dfaust.cfg',
+    'COMA': 'research/configs/config_diffusion.cfg',
+    'DFAUST': 'research/configs/config_diffusion_dfaust.cfg',
 }
 
 
@@ -32,20 +32,36 @@ def read_config(file_name):
 
     config_parms = {}
 
-    dataset_dir = config.get('I/O parameters', 'dataset_dir')
-    template_file = config.get('I/O parameters', 'template_file')
-    checkpoint_dir = config.get('I/O parameters', 'checkpoint_dir')
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
-    # Resolve PATH_TO_PROJECT placeholder: use directory containing the config folder as project root
-    if 'PATH_TO_PROJECT' in dataset_dir or 'PATH_TO_PROJECT' in template_file or 'PATH_TO_PROJECT' in checkpoint_dir:
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-        dataset_dir = dataset_dir.replace('PATH_TO_PROJECT', project_root).replace('/', os.sep)
-        template_file = template_file.replace('PATH_TO_PROJECT', project_root).replace('/', os.sep)
-        checkpoint_dir = checkpoint_dir.replace('PATH_TO_PROJECT', project_root).replace('/', os.sep)
+    def resolve(path):
+        # PATH_TO_PROJECT placeholder, and relative paths, are taken from the repo root
+        path = path.replace('PATH_TO_PROJECT', project_root).replace('/', os.sep)
+        return path if os.path.isabs(path) else os.path.join(project_root, path)
 
-    config_parms['dataset_dir'] = dataset_dir
-    config_parms['template_file'] = template_file
-    config_parms['checkpoint_dir'] = checkpoint_dir
+    # A config may give a single work_dir instead of the individual paths; the
+    # processed cache, template, checkpoints and split lists then all live in it.
+    work_dir = config.get('I/O parameters', 'work_dir', fallback='')
+    if work_dir:
+        work_dir = resolve(work_dir)
+        config_parms['work_dir'] = work_dir
+    derived = lambda *p: os.path.join(work_dir, *p) if work_dir else None
+    dataset_dir = config.get('I/O parameters', 'dataset_dir', fallback=derived('data'))
+    template_file = config.get('I/O parameters', 'template_file',
+                               fallback=derived('data', 'template.ply'))
+    checkpoint_dir = config.get('I/O parameters', 'checkpoint_dir',
+                                fallback=derived('checkpoints'))
+
+    config_parms['dataset_dir'] = resolve(dataset_dir)
+    config_parms['template_file'] = resolve(template_file)
+    config_parms['checkpoint_dir'] = resolve(checkpoint_dir)
+
+    # Optional: an explicit list of training meshes (one path per line), written
+    # by prepare_data.py. Takes precedence over train_dir in process().
+    train_list = config.get('I/O parameters', 'train_list',
+                            fallback=derived('splits', 'train.txt') or '')
+    if train_list:
+        config_parms['train_list'] = resolve(train_list)
 
     # Optional: read raw training meshes from somewhere other than
     # <dataset_dir>/train, so a run can keep its processed cache, template and

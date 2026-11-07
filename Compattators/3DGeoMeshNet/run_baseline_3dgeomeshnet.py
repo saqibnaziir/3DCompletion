@@ -10,7 +10,7 @@ Baseline adapter: 3DGeoMeshNet (multi-scale graph auto-encoder) -> our test set.
                        template-filled hole is replaced by what the learned
                        shape prior predicts.
 This script runs STAGE 2 on STAGE 1's output and writes meshes scorable by
-scripts/eval_completion_dir.py.
+research/eval_completion_dir.py.
 
 INPUT MODES
   --input_dir <dir>   faithful: consume process.py output (run make_holed_partials.py
@@ -54,7 +54,7 @@ USAGE (conda env: 3dmesh)
       --checkpoint_dir <dir with checkpoint_encoder.pt/checkpoint_decoder.pt> \
       --norm_file <matching norm.pt>
 
-  python ../../scripts/eval_completion_dir.py \
+  python ../../research/eval_completion_dir.py \
       --completed_dir completed_fit --suffix _completed_3dgeomeshnet.ply \
       --method 3DGeoMeshNet --out_csv ../../data/completion_test_samples/baseline_results.csv
 """

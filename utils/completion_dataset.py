@@ -138,9 +138,16 @@ class MeshCompletionDataset(InMemoryDataset):
         train_vertices = []
         train_dir = self.config.get('train_dir') or osp.join(self.root, "train")
 
-        # Find all ply files
-        files = sorted(glob(osp.join(train_dir, '**', '*.ply'), recursive=True))
-        print(f"Found {len(files)} mesh files in {train_dir}")
+        train_list = self.config.get('train_list')
+        if train_list and osp.exists(train_list):
+            # explicit file list from prepare_data.py (the split's train + val meshes)
+            with open(train_list) as fh:
+                files = sorted(line.strip() for line in fh if line.strip())
+            print(f"Found {len(files)} mesh files in {train_list}")
+        else:
+            # Find all ply files
+            files = sorted(glob(osp.join(train_dir, '**', '*.ply'), recursive=True))
+            print(f"Found {len(files)} mesh files in {train_dir}")
 
         # Load meshes
         with ProcessPoolExecutor(max_workers=8) as executor:

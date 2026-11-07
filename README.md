@@ -1,96 +1,86 @@
 # 3DCompletion: Conditional Offset Diffusion for Registered Mesh Completion
 
-Completion of registered 3D meshes (fixed topology, dense correspondence to a template) with a conditional diffusion model. A multi-scale graph U-Net predicts per-vertex offsets from the template. At every DDIM step the observed vertices are re-imposed, so they come out exactly as given. Drawing several samples gives a per-vertex uncertainty map.
+Completes registered 3D face meshes (COMA, fixed topology) that have holes. A graph U-Net diffusion model predicts the missing vertices, and the observed vertices are kept exactly as given.
 
-The denoiser is built on the **3DGeoMeshNet** graph auto-encoder (FeaStConv backbone, mesh down/up-sampling). The original base-model documentation is kept in [README_3DGeoMeshNet.md](README_3DGeoMeshNet.md).
-
-## Main ideas
-
-- **Offset diffusion:** the model diffuses the per-vertex displacement from the template mean shape. The target is standardized per axis (`diffusion_scale.pt`).
-- **Hard data consistency:** observed vertices are re-imposed at every sampling step (replacement-based conditioning).
-- **x0-prediction**, with an optional geodesic depth-weighted positional loss (deeper inside the hole means higher weight) and a surface-normal loss on the missing region.
-- **Uncertainty:** the per-vertex spread over K samples, comparable vertex by vertex because correspondence is preserved.
-
-## Repository layout
-
-```
-config/            experiment configs (*.cfg) + config parser
-utils/             models, diffusion process, datasets, masking, losses, metrics
-scripts/           training, inference, evaluation, baselines, ablations, figures
-scripts/_revision/ scripts for the current revision experiments
-Compattators/      wrappers for baselines (FaceCom, 3DGeoMeshNet completion)
-Applications/      base-model applications (denoising, interpolation, extrapolation)
-Mesh_completion/   base-model optimisation-based completion
-err_cal/           error-computation helpers
-revision/          README for the revision experiment folders (data/results are not tracked)
-runCMD.md          full command reference
-CHANGELOG.md       log of every change and experiment
-```
-
-Data, checkpoints, results, meshes and paper material are **not** tracked (see `.gitignore`).
-
-## Setup
+## 1. Install
 
 ```bash
 conda env create -f environment.yml
 conda activate 3dmesh
 ```
+Tested with Python 3.10, PyTorch 2.6 (CUDA 12.4) and PyTorch Geometric 2.6.1.
 
-Tested with Python 3.10, PyTorch 2.6 (CUDA 12.4) and PyTorch Geometric 2.6.1. PyTorch3D and pymeshlab are only needed for some baselines and figure scripts.
+## 2. Put the data in place
 
-## Data
-
-- **COMA** (faces, 5,023 vertices): https://coma.is.tue.mpg.de/
-- **DFAUST** (bodies, 6,890 vertices): https://dfaust.is.tue.mpg.de/ (export with `scripts/prepare_dfaust.py`)
-
-Both require signing their licences; no data is distributed here.
-
-**Official COMA split (used from the revision onwards).** The test set is the standard COMA subset: frames x91–x00 of every 100-frame block, 1,483 meshes over all 12 subjects and 12 expressions. All of these meshes are removed from the training folder. The remaining 18,978 meshes are split 80/20 (seed 1) into train and validation. Validation is used only to select checkpoints.
+Download COMA (https://coma.is.tue.mpg.de/, licence required) and put the meshes in `data/COMA/`, keeping the original layout:
 
 ```
-data/train/<subject>/<expression>/*.ply     training meshes (test frames removed)
-data/COMA_test_subset/gt/<subject>/*.ply    official test set
+data/COMA/FaceTalk_170725_00137_TA/bareteeth/bareteeth.000001.ply
+data/COMA/FaceTalk_170725_00137_TA/cheeks_in/...
+...                                  (12 subjects x 12 expressions, 20,461 meshes)
 ```
 
-## Usage
+If your data is somewhere else, change `coma_dir` in `config/coma.cfg`.
 
-All commands are run from the repository root. See [runCMD.md](runCMD.md) for the full list.
+## 3. Run
 
-**Process data** (writes the cache, template and normalisation into the config's `dataset_dir`):
 ```bash
-python scripts/_revision/process_official_split.py
+python prepare_data.py     # split, leakage checks, processed cache, test benchmark  (~15 min, CPU)
+python train.py            # train the model                                          (~3 days on one GPU)
+python test.py             # evaluate, print the results table
 ```
 
-**Train the full model** (x0 + geodesic depth weight + normal loss):
-```bash
-python scripts/train_diffusion.py --config_file config/config_diffusion_revision.cfg \
-    --param x0 --depth_weight --depth_weight_normalize --lambda_normal 0.01 \
-    --tag depthw_nrm --epochs 300 --batch_size 4 --seed 1
+That's it. Each step reads `config/coma.cfg`. To resume an interrupted training run, use `python train.py --resume`.
+
+## The config
+
+All settings are in **[`config/coma.cfg`](config/coma.cfg)**, with a comment on each one. The ones you may want to change:
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `coma_dir` | `data/COMA` | where the raw meshes are |
+| `work_dir` | `runs/coma_subject_split` | where everything generated goes |
+| `test_subjects` | 2 subjects | held out from training |
+| `test_expressions` | empty | also hold out expressions (empty = subject split) |
+| `train_pair_fraction` | 1.0 | train on a random subset of (subject, expression) pairs |
+| `run_name` | `full` | name of the checkpoint folder |
+| `epoch`, `batch_size` | 300, 4 | training length and batch size |
+
+For a different experiment, copy the file, change it (and give it its own `work_dir`), and pass it to all three commands: `python train.py --config config/my_exp.cfg`.
+
+## The split and the test
+
+- **Training:** every mesh of the training subjects, minus the official COMA test frames ([`splits/coma_official_test.txt`](splits/coma_official_test.txt)). 80% is used for training and 20% for validation, which only selects the checkpoint.
+- **Test**, one table row per cell:
+  - `seen_subject`: training subjects, official test frames (the reference)
+  - `unseen_subject`: the held-out subjects (every 5th frame)
+  - `unseen_expression` / `unseen_both`: only if `test_expressions` is set
+- **Holes:** each test mesh gets three fixed holes (scattered vertices, a patch, a plane cut), 5–40% of the vertices, seed 2026. Every method must be scored on the same holes.
+- **Leakage checks:** `prepare_data.py` stops if any test subject, expression or mesh (compared by vertex content) is in the training data, or if the normalisation and template are not computed from the training set.
+
+## Outputs (in `work_dir`)
+
 ```
-On Windows: `scripts\_revision\train_full_model.bat` (add `--resume` to continue a run).
-
-**Evaluate / complete:**
-```bash
-python scripts/infer_diffusion.py --config_file config/config_diffusion.cfg --eval_test --test_dir <test_dir>
+splits/                  split.json (the split definition), train.txt, test_<cell>.txt
+data/                    processed cache, template.ply, normalisation
+benchmark/<cell>/        masks.npz + index.csv (the fixed test holes)
+checkpoints/predict_x0_<run_name>/   weights (best-val EMA), train_log.csv, TensorBoard logs
+results/<run_name>/<cell>/per_sample.csv   error per test sample
+results/<run_name>/summary.csv          the results table
 ```
 
-**Base model (3DGeoMeshNet auto-encoder):**
-```bash
-python scripts/train.py --config_file config/config.cfg
-python scripts/reconstruction.py --config_file config/config.cfg --input_folder <in> --output_folder <out>
+## Repository layout
+
+```
+prepare_data.py, train.py, test.py   the three commands
+config/coma.cfg                      the config  (config.py = parser)
+splits/                              official COMA test list
+scripts/                             training loop, sampler, evaluation (used by the commands)
+utils/                               model, diffusion, dataset, masking, losses, metrics
+Compattators/                        baselines (FaceCom, 3DGeoMeshNet)
+research/                            paper experiments: ablations, figures, analysis,
+                                     earlier configs (research/configs/), revision runs
+CHANGELOG.md                         log of every change and experiment
 ```
 
-## Configs
-
-| Config | Purpose |
-|---|---|
-| `config/config.cfg` | base 3DGeoMeshNet auto-encoder |
-| `config/config_diffusion.cfg` | diffusion completion, original random 80/20 split |
-| `config/config_diffusion_revision.cfg` | diffusion completion, **official COMA split** (writes to `revision/`) |
-| `config/config_diffusion_dfaust.cfg` | diffusion completion on DFAUST |
-
-`PATH_TO_PROJECT` in a config is replaced by the repository root. The optional `train_dir` key reads raw meshes from a different folder than `dataset_dir/train`.
-
-## Experiment tracking
-
-Every code change and experiment is committed, and summarised in [CHANGELOG.md](CHANGELOG.md).
+The denoiser is built on the 3DGeoMeshNet graph auto-encoder; its original documentation is in [research/README_3DGeoMeshNet.md](research/README_3DGeoMeshNet.md).

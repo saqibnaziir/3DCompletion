@@ -72,7 +72,7 @@ def main():
     print("=" * 66)
 
     sys.path.insert(0, os.path.join(FACECOM_ROOT, "scripts"))
-    from scripts.train import train
+    from research.train_autoencoder import train
     train(config)
 
 

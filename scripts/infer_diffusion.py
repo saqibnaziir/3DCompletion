@@ -11,8 +11,8 @@ Modes:
   --input     : complete a single partial mesh (.ply, same topology as template).
 
 Run:
-  python scripts/infer_diffusion.py --config_file config/config_diffusion.cfg --eval_test
-  python scripts/infer_diffusion.py --config_file config/config_diffusion.cfg \
+  python scripts/infer_diffusion.py --config_file research/configs/config_diffusion.cfg --eval_test
+  python scripts/infer_diffusion.py --config_file research/configs/config_diffusion.cfg \
          --input data/completion_test_samples/test_000_partial_*.ply --output out.ply
 """
 
@@ -386,7 +386,7 @@ def main():
     parser.add_argument("--config_file", type=str, default=None,
                         help="explicit config path (overrides --data)")
     parser.add_argument("--data", type=str, default=None, choices=['COMA', 'DFAUST'],
-                        help="dataset preset: selects config/config_diffusion[_dfaust].cfg")
+                        help="dataset preset: selects research/configs/config_diffusion[_dfaust].cfg")
     parser.add_argument("--eval_test", action='store_true')
     parser.add_argument("--recon", action='store_true',
                         help="R1 reconstruction: condition on the FULL mesh and "

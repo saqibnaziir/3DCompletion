@@ -6,7 +6,7 @@ on a partial observation, using a graph U-Net denoiser. Reuses the existing
 MeshCompletionDataset (on-the-fly masking, 4-channel conditioning).
 
 Run:
-  python scripts/train_diffusion.py --config_file config/config_diffusion.cfg
+  python scripts/train_diffusion.py --config_file research/configs/config_diffusion.cfg
 
 RESUME-SAFE: a full state (model+ema+optimizer+scheduler+epoch+best) is written
 every epoch to diffusion_state.pt, plus a per-epoch line to train_log.csv, so a
@@ -388,7 +388,7 @@ def main():
     parser.add_argument("--config_file", type=str, default=None,
                         help="explicit config path (overrides --data)")
     parser.add_argument("--data", type=str, default=None, choices=['COMA', 'DFAUST'],
-                        help="dataset preset: selects config/config_diffusion[_dfaust].cfg")
+                        help="dataset preset: selects research/configs/config_diffusion[_dfaust].cfg")
     parser.add_argument("--experiment_name", type=str, default=None)
     parser.add_argument("--epochs", type=int, default=None)
     parser.add_argument("--batch_size", type=int, default=None)

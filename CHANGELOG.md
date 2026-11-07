@@ -2,6 +2,15 @@
 
 Newest first. Each entry lists code changes and experiments, with where outputs live (outputs themselves are not tracked).
 
+## 2026-11-07: Repository clean-up, three-command pipeline
+- New entry points at the root, all driven by **`config/coma.cfg`**: `prepare_data.py` (split, leakage checks, processed cache, benchmark), `train.py`, `test.py` (all test cells + `summary.csv`). Everything generated goes to the config's `work_dir` (default `runs/coma_subject_split`).
+- Default split = Seb's subject split: test subjects `FaceTalk_170913_03279_TA` and `FaceTalk_170915_00223_TA`, all 12 expressions in training, official COMA test frames removed from training. Optional `test_expressions` and `train_pair_fraction` (a random subset of training subject-expression pairs, with a minimum number of subjects per expression).
+- `splits/coma_official_test.txt`: the 1,483 official test meshes as a file list. Neither a frame-number rule nor a position rule reproduces the official subset exactly (9–16 meshes differ), so the list is stored.
+- `config/config.py`: optional `work_dir` (derives `dataset_dir`, `template_file`, `checkpoint_dir`, `train_list`); relative paths resolve from the repo root. `utils/completion_dataset.py`: `process()` reads an explicit `train_list` when given. Existing configs behave as before.
+- `scripts/_revision/eval_official_test.py` → `scripts/evaluate_benchmark.py` (also reads `masks.npz`/`index.csv`).
+- Moved everything not needed to run the model to `research/` (same folder depth, so the scripts still run): paper/ablation/figure/analysis scripts, `scripts/_revision/` → `research/revision/`, old configs → `research/configs/`, base auto-encoder (`scripts/train.py` → `research/train_autoencoder.py`). All imports and paths were updated.
+- Removed: `Applications/`, `Mesh_completion/`, `err_cal/`, `runCMD.md`, smoke tests, one-off staging scripts (`stage_test_old`, `test_old_meshes`, `generate_gentle_test`, `regenerate_test_samples`, `run_rest.sh`, `test_nrm_scratch.bat`, `_build_drawio`). They are recoverable from the git tag `pre-cleanup`.
+
 ## 2026-11-07: Exp2 results
 - Exp2 trained for 300 epochs (best-validation EMA) and was evaluated on all four cells with `test_exp2.bat`. Missing-region L2 in mm, single draw:
 
