@@ -1,8 +1,8 @@
 # 3D Mesh Completion via Conditional Offset Diffusion
 
-Fills holes in registered 3D face meshes. A graph U-Net diffusion model generates the missing vertices, and the observed vertices are kept exactly as given. Trained and evaluated on [COMA](https://coma.is.tue.mpg.de/) (5,023-vertex faces with a fixed topology).
+Fills holes in registered 3D meshes. A graph U-Net diffusion model generates the missing vertices, and the observed vertices are kept exactly as given. Trained and evaluated on two datasets with a fixed mesh topology: [COMA](https://coma.is.tue.mpg.de/) faces (5,023 vertices) and [DFAUST](https://dfaust.is.tue.mpg.de/) bodies (6,890 vertices).
 
-- **Offset diffusion:** the model generates each vertex's offset from the template (mean) face.
+- **Offset diffusion:** the model generates each vertex's offset from the template (mean) shape.
 - **Hard data consistency:** at every sampling step the observed vertices are put back, so the known part of the mesh is never changed.
 - **Geometry-aware training:** the loss weight grows with geodesic depth inside the hole, and a surface-normal loss is added on the missing region.
 - **Uncertainty:** drawing several samples gives a per-vertex uncertainty map.
@@ -32,48 +32,58 @@ pip install --no-build-isolation quad-mesh-simplify==1.1.5
 
 ## Data
 
-Download COMA (licence required) and put it in `data/COMA/`, keeping the original layout:
+Both datasets need a licence from their authors, and neither is included here. Put them in `data/` (details in [`data/README.md`](data/README.md)):
 
-```
-data/COMA/<subject>/<expression>/<expression>.<frame>.ply
-```
+| Dataset | Download | Put it in | Config |
+|---|---|---|---|
+| **COMA** (faces) | [coma.is.tue.mpg.de](https://coma.is.tue.mpg.de/) | `data/COMA/<subject>/<expression>/<expression>.<frame>.ply` (the original layout) | [`config/coma.cfg`](config/coma.cfg) |
+| **DFAUST** (bodies) | [dfaust.is.tue.mpg.de](https://dfaust.is.tue.mpg.de/), the registrations | `data/DFAUST/registrations_m.hdf5` (and/or `registrations_f.hdf5`), as downloaded | [`config/dfaust.cfg`](config/dfaust.cfg) |
 
-See [`data/README.md`](data/README.md) for details. If the data is somewhere else, set `coma_dir` in the config.
+For DFAUST, `prepare_data.py` converts the HDF5 files to meshes itself, keeping every 6th frame. If your data is somewhere else, set `data_dir` in the config.
 
 ## Quick start
 
+**COMA**
 ```bash
 python prepare_data.py   # 1. split, leakage checks, processed cache, test benchmark   
 python train.py          # 2. train the model                                          
 python test.py           # 3. evaluate on the test set and print the results table
 ```
 
-All three commands read [`config/coma.cfg`](config/coma.cfg). If training stops, continue it with `python train.py --resume`. For a quick check that everything works, run `python train.py --epochs 1` and then `python test.py --limit 10`.
+**DFAUST:** the same three commands with the DFAUST config:
+```bash
+python prepare_data.py --config config/dfaust.cfg
+python train.py        --config config/dfaust.cfg
+python test.py         --config config/dfaust.cfg
+```
+
+Without `--config`, the commands use [`config/coma.cfg`](config/coma.cfg). If training stops, continue it with `python train.py --resume` (plus the same `--config`). For a quick check that everything works, run `python train.py --epochs 1` and then `python test.py --limit 10`.
 
 ## Configuration
 
-Every setting is in **[`config/coma.cfg`](config/coma.cfg)**, with a comment on each one. The main ones:
+Every setting is in the config file ([`coma.cfg`](config/coma.cfg) or [`dfaust.cfg`](config/dfaust.cfg)), with a comment on each one. The main ones:
 
-| Setting | Default | Meaning |
-|---|---|---|
-| `coma_dir` | `data/COMA` | where the raw meshes are |
-| `work_dir` | `runs/coma_subject_split` | where everything generated is written |
-| `test_subjects` | 2 subjects | held out from training |
-| `test_expressions` | *(empty)* | also hold out expressions; empty = subject split |
-| `train_pair_fraction` | `1.0` | train on a random subset of (subject, expression) pairs |
-| `run_name` | `full` | name of the checkpoint folder |
-| `epoch`, `batch_size` | `300`, `4` | training length and batch size |
+| Setting | COMA | DFAUST | Meaning |
+|---|---|---|---|
+| `data_dir` | `data/COMA` | `data/DFAUST` | where the raw data is |
+| `work_dir` | `runs/coma_subject_split` | `runs/dfaust_subject_split` | where everything generated is written |
+| `test_subjects` | 2 subjects | 1 subject (`50002`) | held out from training |
+| `test_expressions` | *(empty)* | *(empty)* | also hold out expressions / motions; empty = subject split |
+| `epoch` | 300 | 400 | training length |
+| hole types | scatter, patch, plane cut | patch, plane cut | `strategies` in `[benchmark]` |
+| `train_pair_fraction` | `1.0` | `1.0` | train on a random subset of (subject, sequence) pairs |
+| `run_name` | `full` | `full` | name of the checkpoint folder |
 
 To run another experiment, copy the config, edit it (with its own `work_dir`), and pass it to every command, for example `python train.py --config config/my_experiment.cfg`.
 
 ## Evaluation protocol
 
-- **Split:** the test subjects are never seen in training. The official COMA test frames ([`splits/coma_official_test.txt`](splits/coma_official_test.txt)) are also removed from training. The training data is shuffled 80/20 into train and validation; validation only selects the best checkpoint.
+- **Split:** the test subjects are never seen in training. Some frames of the training subjects are also held out: for COMA the official test frames ([`splits/coma_official_test.txt`](splits/coma_official_test.txt)), and for DFAUST, which has no official split, the last 10% of every sequence. The rest is shuffled 80/20 into train and validation; validation only selects the best checkpoint.
 - **Test sets:**
-  - `seen_subject`: training subjects, official test frames (the reference)
-  - `unseen_subject`: held-out subjects, every 5th frame
+  - `seen_subject`: training subjects, held-out frames (the reference)
+  - `unseen_subject`: held-out subjects (COMA every 5th frame, DFAUST every frame)
   - `unseen_expression` and `unseen_both`: only if `test_expressions` is set
-- **Holes:** every test mesh gets three fixed holes: scattered vertices, a contiguous patch and a plane cut. Each removes 5–40% of the vertices (seed 2026), and every method is scored on the same holes.
+- **Holes:** every test mesh gets fixed holes, one of each type, removing 5–40% of the vertices (seed 2026). The types are scattered vertices, a contiguous patch and a plane cut; DFAUST uses only the contiguous ones. Every method is scored on the same holes.
 - **Metric:** mean per-vertex L2 error over the missing region, in mm. The angular normal error is also reported.
 - **Leakage checks:** `prepare_data.py` stops if a test subject, expression or mesh (compared by vertex content) appears in the training data, or if the normalisation or template were not computed from the training set alone.
 
@@ -90,7 +100,7 @@ results/<run_name>/<test set>/per_sample.csv   error for every test sample
 results/<run_name>/summary.csv            results table
 ```
 
-Training curves: `tensorboard --logdir runs/coma_subject_split/checkpoints`
+Training curves: `tensorboard --logdir runs/coma_subject_split/checkpoints` (or `runs/dfaust_subject_split/...`)
 
 ## Project structure
 
@@ -99,7 +109,8 @@ Training curves: `tensorboard --logdir runs/coma_subject_split/checkpoints`
 ├── train.py                 step 2: training
 ├── test.py                  step 3: evaluation
 ├── config/
-│   ├── coma.cfg             all settings
+│   ├── coma.cfg             all settings, COMA
+│   ├── dfaust.cfg           all settings, DFAUST
 │   └── config.py            config parser
 ├── scripts/
 │   ├── train_diffusion.py   training loop
@@ -107,10 +118,9 @@ Training curves: `tensorboard --logdir runs/coma_subject_split/checkpoints`
 │   └── evaluate_benchmark.py
 ├── utils/                   graph U-Net, diffusion process, dataset, masking, losses, metrics
 ├── splits/                  official COMA test list
-├── data/                    put the data here
-└── research/                scripts behind the paper's ablations and figures (not needed to run)
+└── data/                    put the data here
 ```
 
 ## Acknowledgements
 
-The graph U-Net builds on the 3DGeoMeshNet mesh auto-encoder ([research/README_3DGeoMeshNet.md](research/README_3DGeoMeshNet.md)). COMA is from Ranjan et al., *Generating 3D faces using Convolutional Mesh Autoencoders*, ECCV 2018.
+The graph U-Net builds on the 3DGeoMeshNet mesh auto-encoder. COMA is from Ranjan et al., *Generating 3D faces using Convolutional Mesh Autoencoders*, ECCV 2018. DFAUST is from Bogo et al., *Dynamic FAUST: Registering Human Bodies in Motion*, CVPR 2017.

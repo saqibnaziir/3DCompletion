@@ -598,7 +598,7 @@ def facial_mesh_reconstruction(in_file, out_file, config, generator, lambda_reg=
 
 
 def generate_face_sample(out_file, config, generator):
-    """Generate a random face mesh by sampling z and decoding. Used by research/generate_samples.py."""
+    """Generate a random face mesh by sampling z and decoding. Used to sample new faces from the auto-encoder."""
     generator.eval()
     device = next(generator.parameters()).device
     z = get_random_z(config['z_length'], requires_grad=False)

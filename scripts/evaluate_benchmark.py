@@ -73,7 +73,7 @@ def summarize(rows):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--config_file',
-                    default=os.path.join(_ROOT, 'research', 'configs', 'config_diffusion_revision.cfg'))
+                    default=os.path.join(_ROOT, 'config', 'coma.cfg'))
     ap.add_argument('--param', required=True, choices=['eps', 'x0', 'v'])
     ap.add_argument('--tag', default=None)
     ap.add_argument('--bench_dir', default=os.path.join(_ROOT, 'revision', 'benchmark'))

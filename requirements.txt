@@ -12,6 +12,7 @@ networkx==3.4.2
 tqdm>=4.66
 tensorboard>=2.15
 Cython>=3.0
+h5py>=3.10          # only to read the DFAUST .hdf5 download
 
 # Also required, installed in a second step because it is compiled against the
 # numpy above (see README):

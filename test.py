@@ -62,7 +62,8 @@ def main():
                 err['all'].append(float(r['missing_mm']))
         table[c] = {k: sum(v) / len(v) for k, v in err.items()}
         table[c]['n'] = len(err['all'])
-    cols = ['random_scatter', 'bfs_patch', 'plane_cut', 'all']
+    cols = [s for s in ('random_scatter', 'bfs_patch', 'plane_cut')
+            if any(s in row for row in table.values())] + ['all']
     ref = table.get('seen_subject', {}).get('all')
     print('\nMissing-region L2 error (mm)')
     print(f'{"cell":18s} {"n":>5s} ' + ' '.join(f'{c:>14s}' for c in cols) + '   vs seen')

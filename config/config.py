@@ -4,8 +4,8 @@ import os
 
 # Maps the friendly --data name to its diffusion config file (relative to project root).
 DATA_CONFIGS = {
-    'COMA': 'research/configs/config_diffusion.cfg',
-    'DFAUST': 'research/configs/config_diffusion_dfaust.cfg',
+    'COMA': 'config/coma.cfg',
+    'DFAUST': 'config/dfaust.cfg',
 }
 
 

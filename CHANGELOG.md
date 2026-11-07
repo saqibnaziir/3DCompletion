@@ -2,6 +2,14 @@
 
 Newest first. Each entry lists code changes and experiments, with where outputs live (outputs themselves are not tracked).
 
+## 2026-11-07: DFAUST in the same pipeline; research/ kept local
+- New `config/dfaust.cfg`: the same three commands with `--config config/dfaust.cfg`. Test subject `50002` (random, seed 2026), patch + plane-cut holes only, 400 epochs. The config key `coma_dir` is now `data_dir`; the old name still works.
+- `prepare_data.py` accepts the DFAUST download (`registrations_*.hdf5`, exported to `<work_dir>/meshes` every 6th frame) and the exported layout `<subject>_<motion>/<frame>.ply`. Without an official test list, the last `seen_test_fraction` (10%) of every sequence is held out as the seen-subject test set.
+- The normalisation check is now exact: it replays the 80/20 shuffle of `process()` and compares the stored mean with the mean of that training part (COMA 0.00003 mm, DFAUST 0.0002 mm, i.e. float precision).
+- Local DFAUST (`data/DFAUST_ds/train`, 3,487 meshes, 5 subjects × 14 motions): train + val 2,424, seen_subject 269 meshes (538 samples), unseen_subject 794 (1,588 samples). All leakage checks pass, and 1-epoch train + test ran end to end. The COMA split is unchanged (same fingerprint).
+- `research/` is no longer tracked (kept on disk, gitignored). Public code no longer points into it: the `--data COMA/DFAUST` presets map to `config/coma.cfg` / `config/dfaust.cfg`. The research scripts keep the old mapping through `research/legacy_config.py`, and `test_full_model.bat` passes its config explicitly.
+- `test.py` lists only the hole types that are present. `h5py` added to `requirements.txt`.
+
 ## 2026-11-07: Public repo: requirements, README, baselines kept local
 - `Compattators/` (FaceCom, 3DGeoMeshNet baselines) is no longer tracked; it stays on disk and is in `.gitignore`.
 - New `requirements.txt` listing only what the pipeline imports (PyTorch 2.6 cu124, PyG 2.6.1, numpy, scipy, trimesh, networkx, tqdm, tensorboard, Cython). `quad-mesh-simplify` is a separate `--no-build-isolation` install step because it compiles against numpy. `environment.yml` removed, so there is a single install path (conda create + pip).

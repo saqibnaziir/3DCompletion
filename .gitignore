@@ -28,9 +28,9 @@ __pycache__/
 /revision/checkpoints/
 /revision/results/
 /revision/logs/
-# baselines are kept locally, not in the public repo
+# baselines and paper/research scripts are kept locally, not in the public repo
 /Compattators/
+/research/
 
 # Small split files needed to reproduce the experiments
 !/splits/coma_official_test.txt
-!/research/revision/exp2_subj_expr/split.json
