@@ -1,0 +1,18 @@
+# Python 3.10.  pip install -r requirements.txt
+# The index below provides PyTorch built for CUDA 12.4. For another CUDA version
+# (or CPU only), install torch first following https://pytorch.org/get-started/
+--extra-index-url https://download.pytorch.org/whl/cu124
+
+torch==2.6.0
+torch_geometric==2.6.1
+numpy==1.26.4
+scipy==1.15.2
+trimesh==4.6.5
+networkx==3.4.2
+tqdm>=4.66
+tensorboard>=2.15
+Cython>=3.0
+
+# Also required, installed in a second step because it is compiled against the
+# numpy above (see README):
+#   pip install --no-build-isolation quad-mesh-simplify==1.1.5

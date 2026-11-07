@@ -8,11 +8,13 @@
 !*.sh
 !*.md
 !*.yml
+!/requirements.txt
 !.gitignore
 
 # Never tracked
 __pycache__/
-/data/
+/data/*
+!/data/README.md
 /docs/
 /paper
 /graphify-out/
@@ -26,10 +28,8 @@ __pycache__/
 /revision/checkpoints/
 /revision/results/
 /revision/logs/
-# third-party baseline repo (has its own git + license)
-/Compattators/FaceCom_repo/
-/Compattators/FaceCom/coma_dataset/
-/Compattators/FaceCom/checkpoints_coma/
+# baselines are kept locally, not in the public repo
+/Compattators/
 
 # Small split files needed to reproduce the experiments
 !/splits/coma_official_test.txt

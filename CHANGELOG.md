@@ -2,6 +2,11 @@
 
 Newest first. Each entry lists code changes and experiments, with where outputs live (outputs themselves are not tracked).
 
+## 2026-11-07: Public repo: requirements, README, baselines kept local
+- `Compattators/` (FaceCom, 3DGeoMeshNet baselines) is no longer tracked; it stays on disk and is in `.gitignore`.
+- New `requirements.txt` listing only what the pipeline imports (PyTorch 2.6 cu124, PyG 2.6.1, numpy, scipy, trimesh, networkx, tqdm, tensorboard, Cython). `quad-mesh-simplify` is a separate `--no-build-isolation` install step because it compiles against numpy. `environment.yml` removed, so there is a single install path (conda create + pip).
+- README rewritten as a standard project page (requirements, installation, data, quick start, config, evaluation protocol, outputs, structure). New `data/README.md` shows where to put COMA.
+
 ## 2026-11-07: Repository clean-up, three-command pipeline
 - New entry points at the root, all driven by **`config/coma.cfg`**: `prepare_data.py` (split, leakage checks, processed cache, benchmark), `train.py`, `test.py` (all test cells + `summary.csv`). Everything generated goes to the config's `work_dir` (default `runs/coma_subject_split`).
 - Default split = Seb's subject split: test subjects `FaceTalk_170913_03279_TA` and `FaceTalk_170915_00223_TA`, all 12 expressions in training, official COMA test frames removed from training. Optional `test_expressions` and `train_pair_fraction` (a random subset of training subject-expression pairs, with a minimum number of subjects per expression).
