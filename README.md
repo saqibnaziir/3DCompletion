@@ -28,7 +28,7 @@ pip install -r requirements.txt
 pip install --no-build-isolation quad-mesh-simplify==1.1.5
 ```
 
-`quad-mesh-simplify` is compiled during installation, so it needs a C compiler: `build-essential` on Linux, or "Desktop development with C++" from the Visual Studio Build Tools on Windows. If your CUDA version is not 12.4, install PyTorch for your system first ([pytorch.org](https://pytorch.org/get-started/)), then run the commands above.
+`quad-mesh-simplify` is compiled during installation, so it needs a C compiler: `build-essential` on Linux, or "Desktop development with C++" from the Visual Studio Build Tools on Windows. 
 
 ## Data
 
