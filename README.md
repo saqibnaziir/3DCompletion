@@ -43,8 +43,8 @@ See [`data/README.md`](data/README.md) for details. If the data is somewhere els
 ## Quick start
 
 ```bash
-python prepare_data.py   # 1. split, leakage checks, processed cache, test benchmark   (~15 min, CPU)
-python train.py          # 2. train the model                                          (~2.5 days, 300 epochs)
+python prepare_data.py   # 1. split, leakage checks, processed cache, test benchmark   
+python train.py          # 2. train the model                                          
 python test.py           # 3. evaluate on the test set and print the results table
 ```
 
