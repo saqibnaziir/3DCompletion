@@ -2,6 +2,20 @@
 
 Newest first. Each entry lists code changes and experiments, with where outputs live (outputs themselves are not tracked).
 
+## 2026-11-07: Exp2 results
+- Exp2 trained for 300 epochs (best-validation EMA) and was evaluated on all four cells with `test_exp2.bat`. Missing-region L2 in mm, single draw:
+
+  | cell | n | scatter | patch | plane cut | all | vs ref |
+  |---|---|---|---|---|---|---|
+  | ref (seen/seen) | 3,135 | 0.319 | 2.074 | 2.642 | 1.678 | – |
+  | a (unseen subject) | 2,013 | 0.378 | 2.775 | 3.486 | 2.213 | +32% |
+  | b (unseen expression) | 1,428 | 0.367 | 2.299 | 2.783 | 1.816 | +8% |
+  | c (both unseen) | 492 | 0.409 | 2.919 | 3.895 | 2.407 | +43% |
+
+- R1, which saw all subjects and expressions, gives 1.679 on the same ref meshes, so the 30% smaller training set costs nothing on seen data. On the official frames of each cell, R1 gives a 1.757, b 1.728 and c 1.847 (n = 60). Those frames are not exactly the Exp2 frames, but roughly: an unseen subject costs about 0.45 mm (+26%), an unseen expression about 0.09 mm (+5%).
+- Worst case: plane cuts on `mouth_extreme` for unseen subjects (5.10 mm). Test subject `170913_03279` is harder than `170915_00223` (patch 2.97 vs 2.61, plane cut 3.68 vs 3.32 in cell a).
+- Output: `revision/exp2_subj_expr/results/{ref,a,b,c}/per_sample.csv`.
+
 ## 2026-11-04: Exp2 (subject, expression) split, data prepared
 - Everything for Exp2 lives in `revision/exp2_subj_expr/` (see its README). `data/` and the official-split cache in `revision/data/` are untouched (checked: directory listing identical before and after).
 - New `scripts/_revision/exp2_subj_expr/make_split.py`: holds out 2 subjects (random, seed 2026: `FaceTalk_170913_03279_TA`, `FaceTalk_170915_00223_TA`) and 2 expressions (`high_smile`, `mouth_extreme`) at once. It trains on 10 × 10 = 13,430 meshes (hard links in `raw_train/`, no copies), and one model gives four test cells: ref = seen/seen (official test frames, 1,045 meshes), a = unseen subject (671), b = unseen expression (476), c = both unseen (164). Each cell has a benchmark in the same format as `revision/benchmark` (3 masks per mesh, 5–40% holes).
